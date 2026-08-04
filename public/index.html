@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ironside Strength &amp; Conditioning</title>
+    <link rel="stylesheet" href="/widget.css" />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+        color: #16181d;
+        background: #fafafa;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { color: #e8eaed; background: #101216; }
+        .card { background: #16181d !important; border-color: #2b2f36 !important; }
+        code { background: #23262d !important; }
+      }
+      .wrap { max-width: 720px; margin: 0 auto; padding: 64px 24px 160px; }
+      h1 { font-size: 2rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+      .lede { color: #6b7280; margin: 0 0 40px; }
+      .card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin: 16px 0;
+      }
+      h2 { font-size: 1rem; margin: 0 0 10px; }
+      ul { margin: 0; padding-left: 20px; }
+      li { margin: 5px 0; }
+      code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+      .hint { color: #6b7280; font-size: 0.9rem; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Ironside Strength &amp; Conditioning</h1>
+      <p class="lede">
+        A demo storefront. The real deliverable is the chat bubble in the
+        bottom-right corner — this page just gives it somewhere to live.
+      </p>
+
+      <div class="card">
+        <h2>Try these</h2>
+        <ul>
+          <li>“What do you offer?” — answered from the business config, no tool call</li>
+          <li>“I want to try a free session Thursday afternoon” — checks real availability</li>
+          <li>Pick a time, give a name and email — books it for real</li>
+          <li>“How much is membership?” — answered from the configured FAQs</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Then try to break it</h2>
+        <ul>
+          <li>Ask to book a time it never offered you. It will re-check instead of agreeing.</li>
+          <li>Ask about something it can't know — corporate rates, an injury. It escalates.</li>
+          <li>Ask it to write you a poem. It stays in role.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h2>Verify the booking was real</h2>
+        <p class="hint">
+          After booking, open <code>/api/debug/state</code> to see the contact and
+          appointment that were actually written to the CRM. If it's not there,
+          the bot didn't book it — no matter what it said.
+        </p>
+      </div>
+    </div>
+
+    <script src="/widget.js" data-api=""></script>
+  </body>
+</html>

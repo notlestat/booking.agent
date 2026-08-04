@@ -1,0 +1,220 @@
+/* Chat widget.
+   Namespaced under .bkw- so dropping this onto a client's existing site can't
+   collide with their styles, and their styles can't bleed into the widget. */
+
+.bkw-root {
+  --bkw-accent: #1f6feb;
+  --bkw-accent-text: #ffffff;
+  --bkw-surface: #ffffff;
+  --bkw-text: #16181d;
+  --bkw-muted: #6b7280;
+  --bkw-line: #e5e7eb;
+  --bkw-bot-bg: #f3f4f6;
+
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 2147483000;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--bkw-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  .bkw-root {
+    --bkw-surface: #16181d;
+    --bkw-text: #e8eaed;
+    --bkw-muted: #9aa1ab;
+    --bkw-line: #2b2f36;
+    --bkw-bot-bg: #23262d;
+  }
+}
+
+/* --- Launcher bubble ----------------------------------------------------- */
+
+.bkw-launcher {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bkw-accent);
+  color: var(--bkw-accent-text);
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 20%);
+  display: grid;
+  place-items: center;
+  transition: transform 0.15s ease;
+}
+
+.bkw-launcher:hover { transform: scale(1.05); }
+.bkw-launcher:focus-visible { outline: 3px solid var(--bkw-accent); outline-offset: 3px; }
+.bkw-launcher svg { width: 26px; height: 26px; }
+
+/* --- Panel --------------------------------------------------------------- */
+
+.bkw-panel {
+  position: absolute;
+  right: 0;
+  bottom: 72px;
+  width: min(384px, calc(100vw - 40px));
+  height: min(580px, calc(100vh - 120px));
+  background: var(--bkw-surface);
+  border: 1px solid var(--bkw-line);
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 22%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bkw-panel[hidden] { display: none; }
+
+.bkw-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bkw-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bkw-title { font-weight: 600; }
+.bkw-subtitle { font-size: 12px; color: var(--bkw-muted); }
+
+.bkw-close {
+  border: none;
+  background: none;
+  color: var(--bkw-muted);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.bkw-close:hover { background: var(--bkw-bot-bg); }
+
+/* --- Messages ------------------------------------------------------------ */
+
+.bkw-log {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bkw-msg {
+  max-width: 86%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bkw-msg-bot {
+  align-self: flex-start;
+  background: var(--bkw-bot-bg);
+  border-bottom-left-radius: 4px;
+}
+
+.bkw-msg-user {
+  align-self: flex-end;
+  background: var(--bkw-accent);
+  color: var(--bkw-accent-text);
+  border-bottom-right-radius: 4px;
+}
+
+.bkw-msg-error {
+  align-self: flex-start;
+  background: #fee2e2;
+  color: #991b1b;
+  border-bottom-left-radius: 4px;
+}
+
+/* Typing indicator */
+.bkw-typing { display: flex; gap: 4px; align-items: center; }
+.bkw-typing span {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--bkw-muted);
+  animation: bkw-bounce 1.3s infinite ease-in-out;
+}
+.bkw-typing span:nth-child(2) { animation-delay: 0.15s; }
+.bkw-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bkw-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bkw-typing span { animation: none; opacity: 0.6; }
+  .bkw-launcher { transition: none; }
+}
+
+/* --- Suggestion chips ---------------------------------------------------- */
+
+.bkw-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 10px;
+}
+
+.bkw-chip {
+  border: 1px solid var(--bkw-line);
+  background: transparent;
+  color: var(--bkw-text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.bkw-chip:hover { background: var(--bkw-bot-bg); }
+
+/* --- Composer ------------------------------------------------------------ */
+
+.bkw-composer {
+  border-top: 1px solid var(--bkw-line);
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.bkw-input {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--bkw-line);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  max-height: 120px;
+}
+.bkw-input:focus { outline: 2px solid var(--bkw-accent); outline-offset: -1px; }
+
+.bkw-send {
+  border: none;
+  background: var(--bkw-accent);
+  color: var(--bkw-accent-text);
+  border-radius: 10px;
+  padding: 10px 15px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.bkw-send:disabled { opacity: 0.5; cursor: default; }
+
+.bkw-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
