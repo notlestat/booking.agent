@@ -1,5 +1,7 @@
 # Booking Agent
 
+[!\[CI\](https://github.com/notlestat/ai-booking-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/notlestat/ai-booking-agent/actions/workflows/ci.yml)
+
 An AI chat assistant that answers questions about a business and books
 appointments into its CRM. Configured for a gym, with GoHighLevel as the CRM —
 but the business is a config file and the CRM is an interface, so neither is
@@ -60,7 +62,7 @@ Each of these has a test that attacks it directly, bypassing the model:
 
 ## Layout
 
-```
+```javascript
 src/
   config/     the business — services, hours, FAQs, policies, tone
   crm/        the CRM port, plus mock and GoHighLevel adapters
@@ -113,13 +115,13 @@ instructions are in [`docs/GHL-SETUP.md`](docs/GHL-SETUP.md).
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Start with hot reload on <http://localhost:3000> |
-| `npm test` | Run the test suite |
-| `npm run typecheck` | Type-check without emitting |
-| `npm run build` | Compile to `dist/` |
-| `npm start` | Run the compiled build |
+| Command             | What it does                                     |
+| ------------------- | ------------------------------------------------ |
+| `npm run dev`       | Start with hot reload on <http://localhost:3000> |
+| `npm test`          | Run the test suite                               |
+| `npm run typecheck` | Type-check without emitting                      |
+| `npm run build`     | Compile to `dist/`                               |
+| `npm start`         | Run the compiled build                           |
 
 `npm test` passes on a fresh clone with no API key — the live end-to-end tests
 skip themselves. Add a key to `.env` and they run.
@@ -133,7 +135,7 @@ skip themselves. Add a key to `.env` and they run.
 <script src="https://your-host/widget.js" data-api="https://your-host"></script>
 ```
 
-No framework, no build step, ~250 lines of plain JavaScript. Styles are
+No framework, no build step, \~250 lines of plain JavaScript. Styles are
 namespaced under `.bkw-` so they can't collide with the host page.
 
 ---
@@ -146,7 +148,7 @@ Honest list, because these matter if you deploy it:
   balancer would not share conversation state. Swap `src/agent/session.ts` for
   Redis before scaling out.
 - **The GoHighLevel adapter is unverified** against a live account (see above).
-- **No authentication on `/api/chat`.** Anyone who can reach the endpoint can
+- **No authentication on /api/chat.** Anyone who can reach the endpoint can
   spend your API tokens. Put it behind rate limiting and an origin check before
   exposing it publicly.
 - **Replies aren't streamed.** The customer waits for the full response. SSE
