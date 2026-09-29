@@ -1,6 +1,6 @@
 # Booking Agent
 
-[!\[CI\](https://github.com/notlestat/ai-booking-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/notlestat/ai-booking-agent/actions/workflows/ci.yml)
+[![CI](https://github.com/notlestat/booking.agent/actions/workflows/ci.yml/badge.svg)](https://github.com/notlestat/booking.agent/actions/workflows/ci.yml)
 
 An AI chat assistant that answers questions about a business and books
 appointments into its CRM. Configured for a gym, with GoHighLevel as the CRM —
@@ -13,8 +13,12 @@ The chat widget drops onto any website with one script tag.
 
 ## Quick start
 
+Requires Node.js 20+ and npm. Chat uses the Anthropic API even with the mock CRM. The configured model ID is `claude-opus-5` in `src/agent/run.ts`; access depends on your API account.
+
 ```bash
-npm install
+git clone https://github.com/notlestat/booking.agent.git
+cd booking.agent
+npm ci
 cp .env.example .env        # then add your ANTHROPIC_API_KEY
 npm run dev
 ```
@@ -23,10 +27,10 @@ Open <http://localhost:3000> and click the chat bubble in the corner.
 
 No GoHighLevel account is needed. The default `CRM_ADAPTER=mock` runs an
 in-memory CRM that generates real availability from the configured opening
-hours, so the full booking flow works offline.
+hours, so CRM availability and booking-tool tests run locally. The chat assistant still requires an API key and network access.
 
 **Verify a booking was real:** after the assistant confirms a booking, open
-<http://localhost:3000/api/debug/state>. The contact and appointment are there,
+<http://localhost:3000/api/debug/state> in development mode. The contact and appointment are there,
 or the booking didn't happen — regardless of what the assistant said.
 
 ---
@@ -123,10 +127,24 @@ instructions are in [`docs/GHL-SETUP.md`](docs/GHL-SETUP.md).
 | `npm run build`     | Compile to `dist/`                               |
 | `npm start`         | Run the compiled build                           |
 
-`npm test` passes on a fresh clone with no API key — the live end-to-end tests
-skip themselves. Add a key to `.env` and they run.
+With `ANTHROPIC_API_KEY` unset, `npm test` runs the local tests and skips the live conversation tests. Adding a key through `.env` or the environment enables tests that make paid Anthropic API calls.
+
+Build before running `npm start`. Set `NODE_ENV=production` to disable the debug endpoints. The mock CRM and conversation state are lost when the process restarts.
 
 ---
+
+## Environment
+
+Copy [.env.example](.env.example) and configure the values used by your deployment:
+
+| Variable | Purpose |
+|---|---|
+| `ANTHROPIC_API_KEY` | Required to start the chat server |
+| `CRM_ADAPTER` | `mock` by default; `gohighlevel` for the live adapter |
+| `GHL_TOKEN`, `GHL_LOCATION_ID` | Required for GoHighLevel |
+| `GHL_ASSIGNED_USER_ID` | Optional staff assignment |
+| `PORT` | Server port, default `3000` |
+| `NODE_ENV` | Set to `production` to disable `/api/debug/*` |
 
 ## Embedding the widget
 
@@ -135,8 +153,7 @@ skip themselves. Add a key to `.env` and they run.
 <script src="https://your-host/widget.js" data-api="https://your-host"></script>
 ```
 
-No framework, no build step, \~250 lines of plain JavaScript. Styles are
-namespaced under `.bkw-` so they can't collide with the host page.
+The widget uses plain JavaScript without a frontend build step. Its CSS uses the `.bkw-` prefix to reduce style conflicts. Cross-origin hosting needs server CORS configuration; the current Express server does not configure CORS middleware.
 
 ---
 
