@@ -8,7 +8,7 @@ The mock supports local development. The GoHighLevel adapter has not been verifi
 
 ## Run locally
 
-Use Node.js 20+ and npm. Chat requires an Anthropic API key and network access even with the mock CRM. The configured model is `claude-opus-5` in [src/agent/run.ts](src/agent/run.ts); model access depends on your account.
+Use Node.js 20+ and npm. Chat requires an Anthropic API key and network access even with the mock CRM. The configured model is `claude-opus-5` in [src/agent/run.ts](src/agent/run.ts). Model access depends on your account.
 
 ```sh
 git clone https://github.com/notlestat/booking.agent.git
@@ -29,7 +29,7 @@ Open <http://localhost:3000> and choose the chat bubble. With the mock adapter i
 
 Copy [src/config/businesses/gym.ts](src/config/businesses/gym.ts) and edit the business data. Import the new export in [src/config/index.ts](src/config/index.ts), then assign it to `business`.
 
-The prompt, timezone, services, and mock opening hours use that configuration. Review the widget suggestions and tool wording too: some gym-specific text remains in [src/server/routes/chat.ts](src/server/routes/chat.ts) and [src/agent/tools.ts](src/agent/tools.ts).
+The prompt, timezone, services, and mock opening hours use that configuration. Review the widget suggestions and tool wording too. Some gym-specific text remains in [src/server/routes/chat.ts](src/server/routes/chat.ts) and [src/agent/tools.ts](src/agent/tools.ts).
 
 For GoHighLevel, set `CRM_ADAPTER=gohighlevel`, `GHL_TOKEN`, and `GHL_LOCATION_ID`, then add a `calendarId` to each service. Follow [the GoHighLevel setup guide](docs/GHL-SETUP.md) and verify the calls with a controlled account before customer use.
 
@@ -37,7 +37,7 @@ For GoHighLevel, set `CRM_ADAPTER=gohighlevel`, `GHL_TOKEN`, and `GHL_LOCATION_I
 
 - `book_appointment` accepts only a slot ID offered in the current session. It cannot accept an arbitrary date.
 - The mock rejects a second write to the same slot ID. The GoHighLevel adapter rechecks availability before writing, but live conflict handling remains unverified.
-- The booking tool returns success after the CRM write resolves. The model can still produce an inaccurate reply; inspect CRM state when verifying results.
+- The booking tool returns success after the CRM write resolves. The model can still produce an inaccurate reply. Inspect CRM state when verifying results.
 - Cancellation checks that the appointment belongs to the contact selected in the conversation. Email or phone lookup does not verify the requester's identity.
 - Human escalation writes a log entry and returns configured contact instructions. It does not send a staff notification.
 
