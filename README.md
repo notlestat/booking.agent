@@ -2,173 +2,83 @@
 
 [![CI](https://github.com/notlestat/booking.agent/actions/workflows/ci.yml/badge.svg)](https://github.com/notlestat/booking.agent/actions/workflows/ci.yml)
 
-An AI chat assistant that answers questions about a business and books
-appointments into its CRM. Configured for a gym, with GoHighLevel as the CRM —
-but the business is a config file and the CRM is an interface, so neither is
-baked in.
+A TypeScript chat assistant for business questions and appointment booking. Business details come from configuration. The CRM interface has an in-memory mock and a GoHighLevel adapter.
 
-The chat widget drops onto any website with one script tag.
+The mock supports local development. The GoHighLevel adapter has not been verified against a live account.
 
----
+## Run locally
 
-## Quick start
+Use Node.js 20+ and npm. Chat requires an Anthropic API key and network access even with the mock CRM. The configured model is `claude-opus-5` in [src/agent/run.ts](src/agent/run.ts). Model access depends on your account.
 
-Requires Node.js 20+ and npm. Chat uses the Anthropic API even with the mock CRM. The configured model ID is `claude-opus-5` in `src/agent/run.ts`; access depends on your API account.
-
-```bash
+```sh
 git clone https://github.com/notlestat/booking.agent.git
 cd booking.agent
 npm ci
-cp .env.example .env        # then add your ANTHROPIC_API_KEY
+cp .env.example .env
+```
+
+Set `ANTHROPIC_API_KEY` in `.env`. Keep `CRM_ADAPTER=mock` for local CRM state, then start the server:
+
+```sh
 npm run dev
 ```
 
-Open <http://localhost:3000> and click the chat bubble in the corner.
+Open <http://localhost:3000> and choose the chat bubble. With the mock adapter in development mode, inspect <http://localhost:3000/api/debug/state> to confirm that a contact and appointment were stored. A model reply alone does not establish a booking.
 
-No GoHighLevel account is needed. The default `CRM_ADAPTER=mock` runs an
-in-memory CRM that generates real availability from the configured opening
-hours, so CRM availability and booking-tool tests run locally. The chat assistant still requires an API key and network access.
+## Configure the business
 
-**Verify a booking was real:** after the assistant confirms a booking, open
-<http://localhost:3000/api/debug/state> in development mode. The contact and appointment are there,
-or the booking didn't happen — regardless of what the assistant said.
+Copy [src/config/businesses/gym.ts](src/config/businesses/gym.ts) and edit the business data. Import the new export in [src/config/index.ts](src/config/index.ts), then assign it to `business`.
 
----
+The prompt, timezone, services, and mock opening hours use that configuration. Review the widget suggestions and tool wording too. Some gym-specific text remains in [src/server/routes/chat.ts](src/server/routes/chat.ts) and [src/agent/tools.ts](src/agent/tools.ts).
 
-## What it does
+For GoHighLevel, set `CRM_ADAPTER=gohighlevel`, `GHL_TOKEN`, and `GHL_LOCATION_ID`, then add a `calendarId` to each service. Follow [the GoHighLevel setup guide](docs/GHL-SETUP.md) and verify the calls with a controlled account before customer use.
 
-- Answers questions about services, pricing, hours, and policies from a config file
-- Checks real calendar availability before offering any time
-- Books appointments, capturing the customer as a CRM contact
-- Looks up, and cancels, existing bookings
-- Captures leads who aren't ready to book
-- Escalates to a human on billing, injuries, complaints, or anything it can't answer
+## Booking behavior and limits
 
-## What it deliberately cannot do
+- `book_appointment` accepts only a slot ID offered in the current session. It cannot accept an arbitrary date.
+- The mock rejects a second write to the same slot ID. The GoHighLevel adapter rechecks availability before writing, but live conflict handling remains unverified.
+- The booking tool returns success after the CRM write resolves. The model can still produce an inaccurate reply. Inspect CRM state when verifying results.
+- Cancellation checks that the appointment belongs to the contact selected in the conversation. Email or phone lookup does not verify the requester's identity.
+- Human escalation writes a log entry and returns configured contact instructions. It does not send a staff notification.
 
-These are enforced in TypeScript, not requested in the prompt:
+[tests/tools.test.ts](tests/tools.test.ts) exercises the tool guards using the mock CRM. These checks do not establish live-provider behavior or customer authentication.
 
-- **Invent an appointment time.** `book_appointment` accepts a slot ID and has
-  no date parameter. Slot IDs are hashes issued by `check_availability` and
-  cached per session; anything else is rejected.
-- **Double-book.** Availability is re-checked at write time, not just when the
-  slot was offered. The second of two racing bookings fails.
-- **Claim a booking that failed.** A failed write returns an error to the model
-  that says so explicitly. There is no code path that reports success without a
-  resolved write.
-- **Cancel a stranger's appointment.** Cancellation is scoped to the contact
-  identified in the current conversation.
+## Check a change
 
-Each of these has a test that attacks it directly, bypassing the model:
-`tests/tools.test.ts`.
+To run local tests without paid conversation calls, clear the API key for the test process:
 
----
-
-## Layout
-
-```javascript
-src/
-  config/     the business — services, hours, FAQs, policies, tone
-  crm/        the CRM port, plus mock and GoHighLevel adapters
-  agent/      system prompt, tools, session state, the turn loop
-  server/     Express app and routes
-  util/       timezone conversion and PII-redacting logs
-public/       the embeddable chat widget
-tests/        unit tests, tool-guard tests, live end-to-end tests
-docs/         how it works, and GoHighLevel setup
+```sh
+ANTHROPIC_API_KEY= npm test
+npm run typecheck
+npm run build
 ```
 
-Read [`docs/HOW-IT-WORKS.md`](docs/HOW-IT-WORKS.md) for the design reasoning.
+The empty value also prevents a key in `.env` from enabling live tests. A nonempty key enables conversation tests that call Anthropic. Build before running `npm start`, which serves the compiled output in `dist/`.
 
----
+## Environment variables
 
-## Pointing it at a different business
-
-Copy `src/config/businesses/gym.ts`, edit the contents, and change one line in
-`src/config/index.ts`:
-
-```ts
-export const business: Business = mySalon;
-```
-
-The system prompt, the tool descriptions, availability generation, the widget's
-greeting, and the timezone all follow from that file. Nothing else needs to
-change to serve a salon, a dental practice, or a physio clinic.
-
----
-
-## Connecting GoHighLevel
-
-```bash
-CRM_ADAPTER=gohighlevel
-GHL_TOKEN=pit-...
-GHL_LOCATION_ID=...
-```
-
-Plus a `calendarId` on each service in the business config. Step-by-step
-instructions are in [`docs/GHL-SETUP.md`](docs/GHL-SETUP.md).
-
-> **Status of the GoHighLevel adapter:** written against the published v2 API
-> docs, but **not yet run against a live account**. The mock adapter is the one
-> exercised by the test suite. Before putting this in front of customers, work
-> through `docs/GHL-SETUP.md` and confirm each call. Expect to adjust field
-> names — GoHighLevel's docs render client-side and some request bodies aren't
-> fully specified in them.
-
----
-
-## Commands
-
-| Command             | What it does                                     |
-| ------------------- | ------------------------------------------------ |
-| `npm run dev`       | Start with hot reload on <http://localhost:3000> |
-| `npm test`          | Run the test suite                               |
-| `npm run typecheck` | Type-check without emitting                      |
-| `npm run build`     | Compile to `dist/`                               |
-| `npm start`         | Run the compiled build                           |
-
-With `ANTHROPIC_API_KEY` unset, `npm test` runs the local tests and skips the live conversation tests. Adding a key through `.env` or the environment enables tests that make paid Anthropic API calls.
-
-Build before running `npm start`. Set `NODE_ENV=production` to disable the debug endpoints. The mock CRM and conversation state are lost when the process restarts.
-
----
-
-## Environment
-
-Copy [.env.example](.env.example) and configure the values used by your deployment:
+Copy [.env.example](.env.example) and set the values needed by your selected adapter:
 
 | Variable | Purpose |
-|---|---|
-| `ANTHROPIC_API_KEY` | Required to start the chat server |
-| `CRM_ADAPTER` | `mock` by default; `gohighlevel` for the live adapter |
-| `GHL_TOKEN`, `GHL_LOCATION_ID` | Required for GoHighLevel |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Chat API access |
+| `CRM_ADAPTER` | `mock` by default, or `gohighlevel` |
+| `GHL_TOKEN`, `GHL_LOCATION_ID` | GoHighLevel access |
 | `GHL_ASSIGNED_USER_ID` | Optional staff assignment |
 | `PORT` | Server port, default `3000` |
-| `NODE_ENV` | Set to `production` to disable `/api/debug/*` |
+| `NODE_ENV` | `production` disables `/api/debug/*` |
 
-## Embedding the widget
+## Embed the widget
+
+Serve the widget and API from the same origin, or configure server CORS before using separate origins:
 
 ```html
 <link rel="stylesheet" href="https://your-host/widget.css">
 <script src="https://your-host/widget.js" data-api="https://your-host"></script>
 ```
 
-The widget uses plain JavaScript without a frontend build step. Its CSS uses the `.bkw-` prefix to reduce style conflicts. Cross-origin hosting needs server CORS configuration; the current Express server does not configure CORS middleware.
+The widget has no frontend build step. The Express server has no CORS middleware, authentication, or rate limiting. Review those controls before public hosting.
 
----
+Session state and mock CRM data live in memory and disappear on restart. Instances do not share state. Replies are not streamed, and one business configuration is active per process.
 
-## Known limitations
-
-Honest list, because these matter if you deploy it:
-
-- **Sessions are in-memory.** Fine for one server; two instances behind a load
-  balancer would not share conversation state. Swap `src/agent/session.ts` for
-  Redis before scaling out.
-- **The GoHighLevel adapter is unverified** against a live account (see above).
-- **No authentication on /api/chat.** Anyone who can reach the endpoint can
-  spend your API tokens. Put it behind rate limiting and an origin check before
-  exposing it publicly.
-- **Replies aren't streamed.** The customer waits for the full response. SSE
-  streaming is a contained change to `runTurn` and the widget's fetch call.
-- **One business per deployment.** Multi-tenancy would mean keying the config by
-  hostname rather than importing it directly.
+Read [How it works](docs/HOW-IT-WORKS.md) for the existing design explanation.
